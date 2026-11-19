@@ -43,7 +43,7 @@ class Item extends Model
         return $this->hasMany(Item::class, 'parent_id');
     }
 
-    // --- ACCESSOR LOGIKA LINUX ---
+    // ---  LOGIKA LINUX ---
     // Dipanggil lewat: $item->linux_string (Hasil contoh: "-rw-r--r--" atau "drwxr-xr-x")
     protected function linuxString(): Attribute
     {

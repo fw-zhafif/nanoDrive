@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DriveController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,6 +24,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/groups/{group}/members', [GroupController::class, 'addMember'])->name('groups.members.add');
     Route::delete('/groups/{group}/members/{user}', [GroupController::class, 'removeMember'])->name('groups.members.remove');
     Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
+
+    // --- RUTE FITUR DASAR DRIVE ---
+    Route::get('/drive/{folder?}', [DriveController::class, 'index'])->name('drive.index');
+    Route::post('/drive/folder', [DriveController::class, 'storeFolder'])->name('drive.folder.store');
+    Route::post('/drive/upload', [DriveController::class, 'uploadFile'])->name('drive.file.upload');
+    Route::get('/drive/item/{item}/download', [DriveController::class, 'download'])->name('drive.item.download');
+    Route::patch('/drive/item/{item}/rename', [DriveController::class, 'rename'])->name('drive.item.rename');
+    Route::delete('/drive/item/{item}', [DriveController::class, 'destroy'])->name('drive.item.destroy');
 });
 
 

@@ -29,4 +29,23 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // Grup-grup di mana user ini menjadi anggota
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class)->withTimestamps();
+    }
+
+    // Grup yang dibuat oleh user ini
+    public function createdGroups()
+    {
+        return $this->hasMany(Group::class, 'created_by');
+    }
+
+    // File/folder yang dimiliki user ini
+    public function items()
+    {
+        return $this->hasMany(Item::class, 'owner_id');
+    }
 }
+

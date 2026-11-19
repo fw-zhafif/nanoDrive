@@ -32,6 +32,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/drive/item/{item}/download', [DriveController::class, 'download'])->name('drive.item.download');
     Route::patch('/drive/item/{item}/rename', [DriveController::class, 'rename'])->name('drive.item.rename');
     Route::delete('/drive/item/{item}', [DriveController::class, 'destroy'])->name('drive.item.destroy');
+    Route::patch('/drive/item/{item}/permissions', [DriveController::class, 'updatePermissions'])->name('drive.item.permissions');
 });
 
 

@@ -5,16 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class DriveController extends Controller
 {
     public function index(?Item $folder = null)
     {
-        // Pastikan jika parameter folder diisi, item tersebut memang bertipe 'folder'
         abort_if($folder && $folder->type !== 'folder', 404);
 
-        // Bangun jalur Breadcrumb dari folder saat ini naik ke folder induknya
+        // Jika membuka subfolder, wajib punya izin Execute ('x') pada folder tersebut
+        if ($folder) {
+            Gate::authorize('enter', $folder);
+        }
+
+        // Bangun jalur Breadcrumb
         $breadcrumbs = [];
         $current = $folder;
         while ($current) {
@@ -22,17 +27,26 @@ class DriveController extends Controller
             $current = $current->parent;
         }
 
-        // Ambil isi direktori saat ini (Folder diurutkan di atas File)
-        $items = Item::with(['owner', 'group'])
-            ->where('parent_id', $folder?->id)
-            ->orderByRaw("CASE WHEN type = 'folder' THEN 0 ELSE 1 END")
-            ->latest()
-            ->get();
+        // Cek apakah user punya izin Read ('r') untuk melihat isi folder ini
+        $canReadContents = $folder ? Gate::allows('readContents', $folder) : true;
+
+        $items = $canReadContents
+            ? Item::with(['owner', 'group'])
+                ->where('parent_id', $folder?->id)
+                ->orderByRaw("CASE WHEN type = 'folder' THEN 0 ELSE 1 END")
+                ->latest()
+                ->get()
+            : collect();
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
 
         return view('drive.index', [
             'currentFolder' => $folder,
             'breadcrumbs' => $breadcrumbs,
             'items' => $items,
+            'canReadContents' => $canReadContents,
+            'userGroups' => $user->groups()->get(),
         ]);
     }
 
@@ -43,16 +57,20 @@ class DriveController extends Controller
             'parent_id' => ['nullable', 'exists:items,id'],
         ]);
 
+        $parentFolder = !empty($validated['parent_id']) ? Item::findOrFail($validated['parent_id']) : null;
+        if ($parentFolder) {
+            Gate::authorize('writeInto', $parentFolder);
+        }
+
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // Default folder Linux: 755 (rwxr-xr-x)
         Item::create([
             'name' => $validated['name'],
             'type' => 'folder',
-            'parent_id' => $validated['parent_id'] ?? null,
+            'parent_id' => $parentFolder?->id,
             'owner_id' => $user->id,
-            'group_id' => $user->groups()->first()?->id, // Otomatis memakai grup pertama user (jika ada)
+            'group_id' => $parentFolder?->group_id ?? $user->groups()->first()?->id,
             'owner_r' => true, 'owner_w' => true, 'owner_x' => true,
             'group_r' => true, 'group_w' => false, 'group_x' => true,
             'others_r' => true, 'others_w' => false, 'others_x' => true,
@@ -64,27 +82,29 @@ class DriveController extends Controller
     public function uploadFile(Request $request)
     {
         $validated = $request->validate([
-            'file' => ['required', 'file', 'max:10240'], // Maksimal 10 MB
+            'file' => ['required', 'file', 'max:10240'],
             'parent_id' => ['nullable', 'exists:items,id'],
         ]);
+
+        $parentFolder = !empty($validated['parent_id']) ? Item::findOrFail($validated['parent_id']) : null;
+        if ($parentFolder) {
+            Gate::authorize('writeInto', $parentFolder);
+        }
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $uploadedFile = $request->file('file');
-
-        // Simpan file fisik ke storage/app/public/nanodrive
         $path = $uploadedFile->store('nanodrive', 'public');
 
-        // Default file Linux: 644 (rw-r--r--)
         Item::create([
             'name' => $uploadedFile->getClientOriginalName(),
             'type' => 'file',
-            'parent_id' => $validated['parent_id'] ?? null,
+            'parent_id' => $parentFolder?->id,
             'file_path' => $path,
             'mime_type' => $uploadedFile->getClientMimeType(),
             'size' => $uploadedFile->getSize(),
             'owner_id' => $user->id,
-            'group_id' => $user->groups()->first()?->id,
+            'group_id' => $parentFolder?->group_id ?? $user->groups()->first()?->id,
             'owner_r' => true, 'owner_w' => true, 'owner_x' => false,
             'group_r' => true, 'group_w' => false, 'group_x' => false,
             'others_r' => true, 'others_w' => false, 'others_x' => false,
@@ -95,8 +115,9 @@ class DriveController extends Controller
 
     public function download(Item $item)
     {
-        abort_if($item->type !== 'file' || !$item->file_path, 404);
+        Gate::authorize('download', $item);
 
+        abort_if(!$item->file_path, 404);
         $fullPath = Storage::disk('public')->path($item->file_path);
         abort_unless(file_exists($fullPath), 404, 'File fisik tidak ditemukan di server.');
 
@@ -105,13 +126,14 @@ class DriveController extends Controller
 
     public function rename(Request $request, Item $item)
     {
+        Gate::authorize('rename', $item);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
         ]);
 
         $newName = trim($validated['name']);
 
-        // Jika item adalah file, pertahankan ekstensi aslinya agar file tidak rusak saat diunduh
         if ($item->type === 'file') {
             $originalExt = pathinfo($item->name, PATHINFO_EXTENSION);
             if ($originalExt !== '') {
@@ -127,13 +149,51 @@ class DriveController extends Controller
 
     public function destroy(Item $item)
     {
+        Gate::authorize('delete', $item);
+
         $name = $item->name;
         $this->deleteItemRecursively($item);
 
         return back()->with('status', "'{$name}' berhasil dihapus.");
     }
 
-    // Helper rekursif untuk menghapus file fisik di dalam subfolder sebelum menghapus record DB
+    // Method baru: Mengatur Group (chgrp) dan 9 Bit Permissions (chmod)
+    public function updatePermissions(Request $request, Item $item)
+    {
+        Gate::authorize('managePermissions', $item);
+
+        $validated = $request->validate([
+            'group_id' => ['nullable', 'exists:groups,id'],
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Pastikan group yang dipilih memang grup yang diikuti oleh Owner
+        if (!empty($validated['group_id'])) {
+            abort_unless(
+                $user->groups()->where('groups.id', $validated['group_id'])->exists(),
+                403,
+                'Anda bukan anggota dari grup tersebut.'
+            );
+        }
+
+        $item->update([
+            'group_id' => $validated['group_id'] ?? null,
+            'owner_r' => $request->boolean('owner_r'),
+            'owner_w' => $request->boolean('owner_w'),
+            'owner_x' => $request->boolean('owner_x'),
+            'group_r' => $request->boolean('group_r'),
+            'group_w' => $request->boolean('group_w'),
+            'group_x' => $request->boolean('group_x'),
+            'others_r' => $request->boolean('others_r'),
+            'others_w' => $request->boolean('others_w'),
+            'others_x' => $request->boolean('others_x'),
+        ]);
+
+        return back()->with('status', "Hak akses '{$item->name}' diperbarui menjadi {$item->linux_string} ({$item->octal_code}).");
+    }
+
     private function deleteItemRecursively(Item $item): void
     {
         if ($item->type === 'folder') {

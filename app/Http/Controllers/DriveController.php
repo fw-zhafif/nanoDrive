@@ -154,7 +154,7 @@ class DriveController extends Controller
         $name = $item->name;
         $this->deleteItemRecursively($item);
 
-        return back()->with('status', "'{$name}' berhasil dihapus.");
+        return back()->with('deleted', "'{$name}' berhasil dihapus.");
     }
 
     // Method baru: Mengatur Group (chgrp) dan 9 Bit Permissions (chmod)

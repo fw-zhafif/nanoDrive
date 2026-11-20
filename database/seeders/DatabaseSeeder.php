@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
 
         // 1. Buat 3 Akun Demo (Owner, Anggota Group, dan Others)
         $faiz = User::create([
-            'name' => 'Faiz (Owner)',
+            'name' => 'Faiz',
             'email' => 'faiz@gmail.com',
             'password' => Hash::make('password'),
         ]);
@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $budi = User::create([
-            'name' => 'Budi (Others)',
+            'name' => 'Budi',
             'email' => 'budi@kampus.ac.id',
             'password' => Hash::make('password'),
         ]);

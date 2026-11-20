@@ -73,7 +73,7 @@ class GroupController extends Controller
 
         $group->members()->detach($user->id);
 
-        return back()->with('status', "{$user->name} dikeluarkan dari grup {$group->name}.");
+        return back()->with('deleted', "{$user->name} dikeluarkan dari grup {$group->name}.");
     }
 
     public function destroy(Group $group)
@@ -82,6 +82,6 @@ class GroupController extends Controller
 
         $group->delete();
 
-        return back()->with('status', "Grup '{$group->name}' berhasil dihapus.");
+        return back()->with('deleted', "Grup '{$group->name}' berhasil dihapus.");
     }
 }

@@ -12,8 +12,14 @@
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             @if (session('status'))
-                <div class="px-4 py-3 bg-white border-l-4 border-emerald-600 border-y border-r border-zinc-200 text-zinc-800 rounded-r-md text-sm">
+                <div class="px-4 py-3 bg-emerald-50 border-l-4 border-emerald-600 border-y border-r border-emerald-200 text-emerald-900 rounded-r-md text-sm font-medium">
                     {{ session('status') }}
+                </div>
+            @endif
+
+            @if (session('deleted'))
+                <div class="px-4 py-3 bg-red-50 border-l-4 border-red-600 border-y border-r border-red-200 text-red-900 rounded-r-md text-sm font-medium">
+                    {{ session('deleted') }}
                 </div>
             @endif
 
@@ -28,13 +34,15 @@
             @endif
 
             {{-- Create Group --}}
-            <div class="p-5 bg-white border border-zinc-200 rounded-lg">
+            <div class="p-5 bg-white border border-zinc-200 rounded-lg" x-data="{ submitting: false }">
                 <h3 class="text-sm font-semibold text-zinc-900 mb-1">Create new group</h3>
                 <p class="text-xs text-zinc-500 mb-4">
                     Group users together to assign shared <code class="font-mono text-zinc-700">rwx</code> permissions on files and folders.
                 </p>
 
-                <form method="POST" action="{{ route('groups.store') }}" class="flex gap-2.5">
+                <form method="POST" action="{{ route('groups.store') }}"
+                    @submit="if (submitting) { $event.preventDefault(); return; } submitting = true;"
+                    class="flex gap-2.5">
                     @csrf
                     <input
                         name="name"
@@ -43,12 +51,14 @@
                         placeholder="Group name (e.g. Praktikum OS)"
                         required
                     />
-                    <button type="submit" class="px-4 py-2 bg-zinc-900 text-white rounded-md text-xs font-medium hover:bg-zinc-800 transition">
-                        Create group
+                    <button type="submit"
+                            :disabled="submitting"
+                            :class="submitting ? 'opacity-50 cursor-not-allowed' : ''"
+                            class="px-4 py-2 bg-zinc-900 text-white rounded-md text-xs font-medium hover:bg-zinc-800 transition">
+                        <span x-text="submitting ? 'Creating...' : 'Create group'"></span>
                     </button>
                 </form>
             </div>
-
             {{-- Group List --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @forelse ($groups as $group)

@@ -63,8 +63,14 @@
 
             {{-- Notifikasi --}}
             @if (session('status'))
-                <div class="px-4 py-3 bg-white border-l-4 border-emerald-600 border-y border-r border-zinc-200 text-zinc-800 rounded-r-md text-sm flex items-center justify-between">
-                    <span>{{ session('status') }}</span>
+                <div class="px-4 py-3 bg-emerald-50 border-l-4 border-emerald-600 border-y border-r border-emerald-200 text-emerald-900 rounded-r-md text-sm font-medium">
+                    {{ session('status') }}
+                </div>
+            @endif
+
+            @if (session('deleted'))
+                <div class="px-4 py-3 bg-red-50 border-l-4 border-red-600 border-y border-r border-red-200 text-red-900 rounded-r-md text-sm font-medium">
+                    {{ session('deleted') }}
                 </div>
             @endif
 

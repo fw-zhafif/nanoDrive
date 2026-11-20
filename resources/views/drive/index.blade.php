@@ -1,16 +1,21 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('NanoDrive Explorer') }}
-            </h2>
-            <span class="text-xs font-mono bg-gray-800 text-green-400 px-3 py-1 rounded">
-                user: {{ Auth::user()->name }}
-            </span>
+            <div class="flex items-center gap-3">
+                <h2 class="font-semibold text-lg text-zinc-900 tracking-tight">
+                    NanoDrive
+                </h2>
+                <span class="text-zinc-300">/</span>
+                <span class="text-sm text-zinc-500">Linux Permission File System</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-zinc-600 bg-zinc-100 border border-zinc-200 px-2.5 py-1 rounded-md font-mono">
+                <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                <span>uid: {{ Auth::user()->name }}</span>
+            </div>
         </div>
     </x-slot>
 
-    <div class="py-10" x-data="{
+    <div class="py-8 bg-zinc-50 min-h-screen" x-data="{
         showFolderModal: false,
         showUploadModal: false,
         showRenameModal: false,
@@ -54,18 +59,18 @@
             return '' + o + g + ot;
         }
     }">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-5">
+        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8 space-y-4">
 
-            {{-- Notifikasi Sukses & Error --}}
+            {{-- Notifikasi --}}
             @if (session('status'))
-                <div class="p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg text-sm">
-                    {{ session('status') }}
+                <div class="px-4 py-3 bg-white border-l-4 border-emerald-600 border-y border-r border-zinc-200 text-zinc-800 rounded-r-md text-sm flex items-center justify-between">
+                    <span>{{ session('status') }}</span>
                 </div>
             @endif
 
             @if ($errors->any())
-                <div class="p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg text-sm">
-                    <ul class="list-disc list-inside">
+                <div class="px-4 py-3 bg-white border-l-4 border-red-600 border-y border-r border-zinc-200 text-red-700 rounded-r-md text-sm">
+                    <ul class="list-disc list-inside space-y-0.5">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
@@ -73,30 +78,33 @@
                 </div>
             @endif
 
-            {{-- Toolbar Atas: Breadcrumb & Tombol Aksi --}}
-            <div class="p-4 bg-white shadow sm:rounded-lg flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
+            {{-- Path Bar & Primary Actions --}}
+            <div class="px-4 py-3 bg-white border border-zinc-200 rounded-lg flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-2.5">
                     @if ($currentFolder)
                         <a href="{{ $currentFolder->parent_id ? route('drive.index', $currentFolder->parent_id) : route('drive.index') }}"
-                           class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-semibold">
-                            ⬅ Kembali
+                           title="Naik ke direktori induk"
+                           class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-zinc-100 hover:bg-zinc-200/70 text-zinc-700 rounded-md text-xs font-medium transition">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            <span>Up</span>
                         </a>
                     @endif
 
-                    <nav class="flex items-center space-x-2 text-sm text-gray-600">
-                        <a href="{{ route('drive.index') }}" class="font-semibold text-indigo-600 hover:underline">
-                            /root (My Drive)
+                    <nav class="flex items-center flex-wrap gap-1.5 text-sm font-mono">
+                        <a href="{{ route('drive.index') }}" class="text-zinc-900 font-semibold hover:underline">
+                            /root
                         </a>
                         @foreach ($breadcrumbs as $crumb)
-                            <span>/</span>
-                            <a href="{{ route('drive.index', $crumb) }}" class="hover:underline {{ $loop->last ? 'font-bold text-gray-900' : '' }}">
+                            <span class="text-zinc-400">/</span>
+                            <a href="{{ route('drive.index', $crumb) }}" class="hover:underline {{ $loop->last ? 'text-zinc-900 font-semibold' : 'text-zinc-600' }}">
                                 {{ $crumb->name }}
                             </a>
                         @endforeach
                     </nav>
                 </div>
 
-                {{-- Tombol Buat Folder & Upload hanya aktif jika di root ATAU punya izin Write ('w') di folder aktif --}}
                 @php
                     $canWriteHere = !$currentFolder || Auth::user()->can('writeInto', $currentFolder);
                 @endphp
@@ -104,303 +112,355 @@
                 <div class="flex items-center gap-2">
                     @if ($canWriteHere)
                         <button @click="showFolderModal = true" type="button"
-                            class="px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
-                            + Folder Baru
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-300 rounded-md text-xs font-medium text-zinc-700 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 transition">
+                            <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span>New folder</span>
                         </button>
                         <button @click="showUploadModal = true" type="button"
-                            class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
-                            Upload File
+                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-zinc-900 border border-zinc-900 rounded-md text-xs font-medium text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-zinc-900 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            <span>Upload file</span>
                         </button>
                     @else
-                        <span class="text-xs bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1.5 rounded">
-                            Mode Read-Only (Tidak ada izin Write di folder ini)
+                        <span class="inline-flex items-center gap-1.5 text-xs text-zinc-600 bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-md">
+                            <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <span>Read-only directory</span>
                         </span>
                     @endif
                 </div>
             </div>
 
-            {{-- Tabel Daftar File & Folder --}}
-            <div class="bg-white shadow sm:rounded-lg overflow-hidden">
+            {{-- File Explorer Table --}}
+            <div class="bg-white border border-zinc-200 rounded-lg overflow-hidden">
                 @if (!$canReadContents)
-                    <div class="p-10 text-center space-y-2">
-                        <p class="text-red-600 font-semibold">Permission Denied (Missing Read 'r' Bit)</p>
-                        <p class="text-sm text-gray-500">
-                            Anda memiliki izin masuk (Execute <code>x</code>) ke folder ini, tetapi tidak memiliki izin Read (<code>r</code>) untuk melihat daftar isinya.
+                    <div class="p-12 text-center max-w-md mx-auto space-y-2">
+                        <div class="w-10 h-10 mx-auto rounded-full bg-zinc-100 text-zinc-600 flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        </div>
+                        <p class="text-sm font-semibold text-zinc-900">Directory listing denied (missing read bit)</p>
+                        <p class="text-xs text-zinc-500 leading-relaxed">
+                            Bit Execute (<code class="font-mono text-zinc-800">x</code>) mengizinkan Anda masuk ke direktori ini, tetapi bit Read (<code class="font-mono text-zinc-800">r</code>) tidak aktif untuk melihat daftar isinya.
                         </p>
                     </div>
                 @else
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead class="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
-                            <tr>
-                                <th class="px-6 py-3 text-left">Nama</th>
-                                <th class="px-6 py-3 text-left">Owner</th>
-                                <th class="px-6 py-3 text-left">Group</th>
-                                <th class="px-6 py-3 text-left">Linux Permissions</th>
-                                <th class="px-6 py-3 text-left">Ukuran</th>
-                                <th class="px-6 py-3 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            @forelse ($items as $item)
-                                <tr class="hover:bg-gray-50">
-                                    {{-- Kolom Nama & Cek Izin Masuk Folder ('enter') --}}
-                                    <td class="px-6 py-4 font-medium text-gray-900">
-                                        @if ($item->type === 'folder')
-                                            @can('enter', $item)
-                                                <a href="{{ route('drive.index', $item) }}" class="flex items-center gap-2 text-indigo-600 hover:underline">
-                                                    <span>📁</span>
-                                                    <span>{{ $item->name }}</span>
-                                                </a>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-zinc-200 text-sm">
+                            <thead class="bg-zinc-50/70 text-xs font-medium text-zinc-500">
+                                <tr>
+                                    <th class="px-5 py-3 text-left font-medium">Name</th>
+                                    <th class="px-5 py-3 text-left font-medium">Owner</th>
+                                    <th class="px-5 py-3 text-left font-medium">Group</th>
+                                    <th class="px-5 py-3 text-left font-medium">Mode (Owner · Group · Others)</th>
+                                    <th class="px-5 py-3 text-right font-medium">Size</th>
+                                    <th class="px-5 py-3 text-right font-medium">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-100">
+                                @forelse ($items as $item)
+                                    @php
+                                        $permStr = $item->linux_string;
+                                        $segments = [
+                                            ['label' => 'Owner', 'bits' => str_split(substr($permStr, 1, 3))],
+                                            ['label' => 'Group', 'bits' => str_split(substr($permStr, 4, 3))],
+                                            ['label' => 'Others', 'bits' => str_split(substr($permStr, 7, 3))],
+                                        ];
+                                    @endphp
+                                    <tr class="hover:bg-zinc-50/80 transition-colors">
+                                        {{-- Name --}}
+                                        <td class="px-5 py-3.5">
+                                            @if ($item->type === 'folder')
+                                                @can('enter', $item)
+                                                    <a href="{{ route('drive.index', $item) }}" class="inline-flex items-center gap-2.5 text-zinc-900 font-medium hover:text-blue-700 group">
+                                                        <svg class="w-4 h-4 text-zinc-700 group-hover:text-blue-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                                        </svg>
+                                                        <span>{{ $item->name }}</span>
+                                                    </a>
+                                                @else
+                                                    <div class="inline-flex items-center gap-2.5 text-zinc-400 cursor-not-allowed" title="Permission denied: missing execute (x) bit">
+                                                        <svg class="w-4 h-4 text-zinc-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                        </svg>
+                                                        <span>{{ $item->name }}</span>
+                                                    </div>
+                                                @endcan
                                             @else
-                                                <div class="flex items-center gap-2 text-gray-400 cursor-not-allowed" title="Tidak ada izin Execute (x) untuk masuk">
-                                                    <span>🔒</span>
+                                                <div class="inline-flex items-center gap-2.5 text-zinc-800">
+                                                    <svg class="w-4 h-4 text-zinc-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                    </svg>
                                                     <span>{{ $item->name }}</span>
                                                 </div>
-                                            @endcan
-                                        @else
-                                            <div class="flex items-center gap-2">
-                                                <span>📄</span>
-                                                <span>{{ $item->name }}</span>
+                                            @endif
+                                        </td>
+
+                                        {{-- Owner --}}
+                                        <td class="px-5 py-3.5 text-zinc-600 text-xs">
+                                            <span>{{ $item->owner->name }}</span>
+                                            @if ($item->owner_id === Auth::id())
+                                                <span class="ml-1 text-zinc-400">(you)</span>
+                                            @endif
+                                        </td>
+
+                                        {{-- Group --}}
+                                        <td class="px-5 py-3.5 text-xs">
+                                            @if ($item->group)
+                                                <span class="text-zinc-700 font-medium">{{ $item->group->name }}</span>
+                                            @else
+                                                <span class="text-zinc-400">—</span>
+                                            @endif
+                                        </td>
+
+                                        {{-- Linux Mode (Clean Tabular Monospace) --}}
+                                        <td class="px-5 py-3.5">
+                                            <div class="inline-flex items-center gap-2 font-mono text-xs" title="{{ $permStr }}">
+                                                <span class="px-1.5 py-0.5 bg-zinc-100 border border-zinc-200 text-zinc-700 rounded font-medium tabular-nums">
+                                                    {{ $item->octal_code }}
+                                                </span>
+                                                <div class="inline-flex items-center gap-1.5 tracking-tight">
+                                                    @foreach ($segments as $idx => $seg)
+                                                        <span title="{{ $seg['label'] }}: {{ implode('', $seg['bits']) }}" class="inline-flex">
+                                                            @foreach ($seg['bits'] as $b)
+                                                                <span class="{{ $b === '-' ? 'text-zinc-300' : 'text-zinc-900 font-semibold' }}">{{ $b }}</span>
+                                                            @endforeach
+                                                        </span>
+                                                        @if ($idx < 2)
+                                                            <span class="text-zinc-300 select-none">·</span>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
                                             </div>
-                                        @endif
-                                    </td>
+                                        </td>
 
-                                    {{-- Kolom Owner --}}
-                                    <td class="px-6 py-4 text-gray-600">
-                                        {{ $item->owner->name }}
-                                        @if ($item->owner_id === Auth::id())
-                                            <span class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded ml-1">You</span>
-                                        @endif
-                                    </td>
+                                        {{-- Size --}}
+                                        <td class="px-5 py-3.5 text-right text-zinc-500 font-mono text-xs tabular-nums">
+                                            {{ $item->type === 'folder' ? '—' : number_format($item->size / 1024, 1) . ' KB' }}
+                                        </td>
 
-                                    {{-- Kolom Group --}}
-                                    <td class="px-6 py-4 text-gray-600">
-                                        {{ $item->group?->name ?? 'none' }}
-                                    </td>
+                                        {{-- Actions --}}
+                                        <td class="px-5 py-3.5 text-right">
+                                            <div class="inline-flex items-center justify-end gap-3 text-xs font-medium">
+                                                @can('managePermissions', $item)
+                                                    <button type="button"
+                                                        @click="openPermModal(@js([
+                                                            'url' => route('drive.item.permissions', $item),
+                                                            'name' => $item->name,
+                                                            'isFolder' => $item->type === 'folder',
+                                                            'groupId' => $item->group_id,
+                                                            'owner_r' => $item->owner_r, 'owner_w' => $item->owner_w, 'owner_x' => $item->owner_x,
+                                                            'group_r' => $item->group_r, 'group_w' => $item->group_w, 'group_x' => $item->group_x,
+                                                            'others_r' => $item->others_r, 'others_w' => $item->others_w, 'others_x' => $item->others_x,
+                                                        ]))"
+                                                        class="text-zinc-900 underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-900">
+                                                        Permissions
+                                                    </button>
+                                                @endcan
 
-                                    {{-- Kolom Notasi Linux --}}
-                                    <td class="px-6 py-4 font-mono text-xs">
-                                        <span class="bg-gray-900 text-amber-300 px-2 py-1 rounded">
-                                            {{ $item->linux_string }}
-                                        </span>
-                                        <span class="text-gray-500 ml-1">({{ $item->octal_code }})</span>
-                                    </td>
+                                                @if ($item->type === 'file')
+                                                    @can('download', $item)
+                                                        <a href="{{ route('drive.item.download', $item) }}"
+                                                           class="text-zinc-600 hover:text-zinc-900">
+                                                            Download
+                                                        </a>
+                                                    @endcan
+                                                @endif
 
-                                    {{-- Kolom Ukuran --}}
-                                    <td class="px-6 py-4 text-gray-500 text-xs">
-                                        {{ $item->type === 'folder' ? '-' : number_format($item->size / 1024, 1) . ' KB' }}
-                                    </td>
+                                                @can('rename', $item)
+                                                    @php
+                                                        $editableName = $item->type === 'file' ? pathinfo($item->name, PATHINFO_FILENAME) : $item->name;
+                                                        $fileExt = $item->type === 'file' ? pathinfo($item->name, PATHINFO_EXTENSION) : '';
+                                                    @endphp
+                                                    <button type="button"
+                                                        @click="
+                                                            showRenameModal = true;
+                                                            renameUrl = '{{ route('drive.item.rename', $item) }}';
+                                                            renameName = '{{ addslashes($editableName) }}';
+                                                            renameExt = '{{ addslashes($fileExt) }}';
+                                                        "
+                                                        class="text-zinc-600 hover:text-zinc-900">
+                                                        Rename
+                                                    </button>
+                                                @endcan
 
-                                    {{-- Kolom Aksi Terproteksi @can --}}
-                                    <td class="px-6 py-4 text-right space-x-3 text-xs font-medium">
-                                        @can('managePermissions', $item)
-                                            <button type="button"
-                                                @click="openPermModal(@js([
-                                                    'url' => route('drive.item.permissions', $item),
-                                                    'name' => $item->name,
-                                                    'isFolder' => $item->type === 'folder',
-                                                    'groupId' => $item->group_id,
-                                                    'owner_r' => $item->owner_r, 'owner_w' => $item->owner_w, 'owner_x' => $item->owner_x,
-                                                    'group_r' => $item->group_r, 'group_w' => $item->group_w, 'group_x' => $item->group_x,
-                                                    'others_r' => $item->others_r, 'others_w' => $item->others_w, 'others_x' => $item->others_x,
-                                                ]))"
-                                                class="text-indigo-600 hover:underline font-semibold">
-                                                Permissions
-                                            </button>
-                                        @endcan
+                                                @can('delete', $item)
+                                                    <form method="POST" action="{{ route('drive.item.destroy', $item) }}" class="inline"
+                                                        onsubmit="return confirm('Hapus {{ addslashes($item->name) }} secara permanen?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:text-red-800">
+                                                            Delete
+                                                        </button>
+                                                    </form>
+                                                @endcan
 
-                                        @if ($item->type === 'file')
-                                            @can('download', $item)
-                                                <a href="{{ route('drive.item.download', $item) }}" class="text-green-600 hover:underline">
-                                                    Download
-                                                </a>
-                                            @endcan
-                                        @endif
-
-                                        @can('rename', $item)
-                                            @php
-                                                $editableName = $item->type === 'file' ? pathinfo($item->name, PATHINFO_FILENAME) : $item->name;
-                                                $fileExt = $item->type === 'file' ? pathinfo($item->name, PATHINFO_EXTENSION) : '';
-                                            @endphp
-                                            <button type="button"
-                                                @click="
-                                                    showRenameModal = true;
-                                                    renameUrl = '{{ route('drive.item.rename', $item) }}';
-                                                    renameName = '{{ addslashes($editableName) }}';
-                                                    renameExt = '{{ addslashes($fileExt) }}';
-                                                "
-                                                class="text-amber-600 hover:underline">
-                                                Rename
-                                            </button>
-                                        @endcan
-
-                                        @can('delete', $item)
-                                            <form method="POST" action="{{ route('drive.item.destroy', $item) }}" class="inline"
-                                                onsubmit="return confirm('Yakin ingin menghapus {{ addslashes($item->name) }}?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:underline">
-                                                    Delete
-                                                </button>
-                                            </form>
-                                        @endcan
-
-                                        @if (
-                                            Auth::user()->cannot('managePermissions', $item) &&
-                                            Auth::user()->cannot('download', $item) &&
-                                            Auth::user()->cannot('rename', $item) &&
-                                            Auth::user()->cannot('delete', $item) &&
-                                            $item->type === 'file'
-                                        )
-                                            <span class="text-gray-400 italic">No Access</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="px-6 py-8 text-center text-gray-400">
-                                        Direktori ini masih kosong.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                                @if (
+                                                    Auth::user()->cannot('managePermissions', $item) &&
+                                                    Auth::user()->cannot('download', $item) &&
+                                                    Auth::user()->cannot('rename', $item) &&
+                                                    Auth::user()->cannot('delete', $item) &&
+                                                    $item->type === 'file'
+                                                )
+                                                    <span class="text-zinc-400">No access</span>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="px-5 py-12 text-center text-zinc-400 text-xs">
+                                            Directory is empty.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 @endif
             </div>
         </div>
 
-        {{-- MODAL 1: BUAT FOLDER BARU --}}
-        <div x-show="showFolderModal" style="display: none;" class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-            <div @click.away="showFolderModal = false" class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-                <h3 class="text-lg font-semibold mb-4">Buat Folder Baru</h3>
+        {{-- MODAL 1: NEW FOLDER --}}
+        <div x-show="showFolderModal" style="display: none;" class="fixed inset-0 bg-zinc-900/40 flex items-center justify-center z-50 p-4">
+            <div @click.away="showFolderModal = false" class="bg-white border border-zinc-200 rounded-lg p-6 w-full max-w-md">
+                <h3 class="text-base font-semibold text-zinc-900 mb-1">Create new folder</h3>
+                <p class="text-xs text-zinc-500 mb-4">Default mode: <span class="font-mono text-zinc-700">755 (drwxr-xr-x)</span></p>
                 <form method="POST" action="{{ route('drive.folder.store') }}">
                     @csrf
                     <input type="hidden" name="parent_id" value="{{ $currentFolder?->id }}">
-                    <x-text-input name="name" type="text" class="w-full mb-4" placeholder="Nama folder..." required />
+                    <input name="name" type="text" class="w-full border-zinc-300 rounded-md text-sm focus:border-zinc-900 focus:ring-zinc-900 mb-4" placeholder="Folder name" required />
                     <div class="flex justify-end gap-2">
-                        <button type="button" @click="showFolderModal = false" class="px-4 py-2 text-sm text-gray-600">Batal</button>
-                        <x-primary-button>Simpan</x-primary-button>
+                        <button type="button" @click="showFolderModal = false" class="px-3.5 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900">Cancel</button>
+                        <button type="submit" class="px-4 py-1.5 bg-zinc-900 text-white rounded-md text-xs font-medium hover:bg-zinc-800">Create</button>
                     </div>
                 </form>
             </div>
         </div>
 
         {{-- MODAL 2: UPLOAD FILE --}}
-        <div x-show="showUploadModal" style="display: none;" class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-            <div @click.away="showUploadModal = false" class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-                <h3 class="text-lg font-semibold mb-4">Upload File (Maks 10MB)</h3>
+        <div x-show="showUploadModal" style="display: none;" class="fixed inset-0 bg-zinc-900/40 flex items-center justify-center z-50 p-4">
+            <div @click.away="showUploadModal = false" class="bg-white border border-zinc-200 rounded-lg p-6 w-full max-w-md">
+                <h3 class="text-base font-semibold text-zinc-900 mb-1">Upload file</h3>
+                <p class="text-xs text-zinc-500 mb-4">Max 10 MB · Default mode: <span class="font-mono text-zinc-700">644 (-rw-r--r--)</span></p>
                 <form method="POST" action="{{ route('drive.file.upload') }}" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="parent_id" value="{{ $currentFolder?->id }}">
-                    <input type="file" name="file" class="block w-full text-sm text-gray-600 mb-4 border rounded p-2" required>
+                    <input type="file" name="file" class="block w-full text-xs text-zinc-600 mb-4 border border-zinc-300 rounded-md p-2 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200" required>
                     <div class="flex justify-end gap-2">
-                        <button type="button" @click="showUploadModal = false" class="px-4 py-2 text-sm text-gray-600">Batal</button>
-                        <x-primary-button>Upload</x-primary-button>
+                        <button type="button" @click="showUploadModal = false" class="px-3.5 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900">Cancel</button>
+                        <button type="submit" class="px-4 py-1.5 bg-zinc-900 text-white rounded-md text-xs font-medium hover:bg-zinc-800">Upload</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        {{-- MODAL 3: RENAME ITEM --}}
-        <div x-show="showRenameModal" style="display: none;" class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-            <div @click.away="showRenameModal = false" class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-                <h3 class="text-lg font-semibold mb-4">Ganti Nama Item</h3>
+        {{-- MODAL 3: RENAME --}}
+        <div x-show="showRenameModal" style="display: none;" class="fixed inset-0 bg-zinc-900/40 flex items-center justify-center z-50 p-4">
+            <div @click.away="showRenameModal = false" class="bg-white border border-zinc-200 rounded-lg p-6 w-full max-w-md">
+                <h3 class="text-base font-semibold text-zinc-900 mb-4">Rename item</h3>
                 <form method="POST" :action="renameUrl">
                     @csrf
                     @method('PATCH')
                     <div class="flex items-center mb-4">
-                        <x-text-input name="name" type="text" class="w-full" x-model="renameName" required />
+                        <input name="name" type="text" class="w-full border-zinc-300 rounded-md text-sm focus:border-zinc-900 focus:ring-zinc-900" x-model="renameName" required />
                         <span x-show="renameExt !== ''" x-text="'.' + renameExt"
-                              class="ml-2 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm font-mono text-gray-600">
+                              class="ml-2 px-2.5 py-2 bg-zinc-100 border border-zinc-200 rounded-md text-xs font-mono text-zinc-600">
                         </span>
                     </div>
                     <div class="flex justify-end gap-2">
-                        <button type="button" @click="showRenameModal = false" class="px-4 py-2 text-sm text-gray-600">Batal</button>
-                        <x-primary-button>Update</x-primary-button>
+                        <button type="button" @click="showRenameModal = false" class="px-3.5 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900">Cancel</button>
+                        <button type="submit" class="px-4 py-1.5 bg-zinc-900 text-white rounded-md text-xs font-medium hover:bg-zinc-800">Save</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        {{-- MODAL 4: PENGATURAN HAK AKSES LINUX (CHMOD & CHGRP) --}}
-        <div x-show="showPermModal" style="display: none;" class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50 p-4">
-            <div @click.away="showPermModal = false" class="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl space-y-5">
-                <div class="flex items-start justify-between border-b pb-3">
+        {{-- MODAL 4: PERMISSIONS INSPECTOR (CHMOD & CHGRP) --}}
+        <div x-show="showPermModal" style="display: none;" class="fixed inset-0 bg-zinc-900/40 flex items-center justify-center z-50 p-4">
+            <div @click.away="showPermModal = false" class="bg-white border border-zinc-200 rounded-lg p-6 w-full max-w-lg space-y-5">
+                <div class="flex items-start justify-between border-b border-zinc-200 pb-3.5">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-900">Pengaturan Hak Akses (Linux Permissions)</h3>
-                        <p class="text-xs text-gray-500 mt-0.5">Item: <span class="font-semibold text-gray-800" x-text="permItemName"></span></p>
+                        <h3 class="text-base font-semibold text-zinc-900">Access permissions</h3>
+                        <p class="text-xs text-zinc-500 mt-0.5 font-mono" x-text="permItemName"></p>
                     </div>
                     <div class="text-right font-mono">
-                        <span class="bg-gray-900 text-amber-300 text-xs px-2.5 py-1 rounded" x-text="liveLinuxString"></span>
-                        <div class="text-xs text-gray-500 mt-1">Octal: <strong x-text="liveOctal"></strong></div>
+                        <div class="inline-flex items-center gap-1.5 bg-zinc-100 border border-zinc-200 px-2.5 py-1 rounded text-xs text-zinc-900">
+                            <span x-text="liveLinuxString"></span>
+                            <span class="text-zinc-400">|</span>
+                            <strong x-text="liveOctal"></strong>
+                        </div>
                     </div>
                 </div>
 
-                <form method="POST" :action="permUrl" class="space-y-5">
+                <form method="POST" :action="permUrl" class="space-y-4">
                     @csrf
                     @method('PATCH')
 
-                    {{-- Dropdown Ganti Group (chgrp) --}}
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">
-                            Group Kepemilikan (chgrp)
+                        <label class="block text-xs font-medium text-zinc-700 mb-1">
+                            Assigned group (<code class="font-mono text-zinc-500">chgrp</code>)
                         </label>
-                        <select name="group_id" x-model="permGroupId" class="w-full border-gray-300 rounded-md shadow-sm text-sm">
-                            <option value="">-- Tidak terikat grup (None) --</option>
+                        <select name="group_id" x-model="permGroupId" class="w-full border-zinc-300 rounded-md text-sm focus:border-zinc-900 focus:ring-zinc-900">
+                            <option value="">No group assigned</option>
                             @foreach ($userGroups as $grp)
                                 <option value="{{ $grp->id }}">{{ $grp->name }}</option>
                             @endforeach
                         </select>
                     </div>
 
-                    {{-- Preset Cepat --}}
                     <div>
-                        <span class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Preset Cepat (chmod)</span>
-                        <div class="flex flex-wrap gap-2 text-xs">
-                            <button type="button" @click="setPreset(6, 4, 4)" class="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 rounded font-mono">644 (Default File)</button>
-                            <button type="button" @click="setPreset(7, 5, 5)" class="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 rounded font-mono">755 (Default Folder)</button>
-                            <button type="button" @click="setPreset(6, 6, 0)" class="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 rounded font-mono">660 (Kolaborasi Grup)</button>
-                            <button type="button" @click="setPreset(6, 0, 0)" class="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 rounded font-mono">600 (Privat Owner)</button>
+                        <span class="block text-xs font-medium text-zinc-700 mb-1.5">Quick presets (<code class="font-mono text-zinc-500">chmod</code>)</span>
+                        <div class="flex flex-wrap gap-1.5 text-xs font-mono">
+                            <button type="button" @click="setPreset(6, 4, 4)" class="px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded text-zinc-800">644 File</button>
+                            <button type="button" @click="setPreset(7, 5, 5)" class="px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded text-zinc-800">755 Dir</button>
+                            <button type="button" @click="setPreset(6, 6, 0)" class="px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded text-zinc-800">660 Group</button>
+                            <button type="button" @click="setPreset(6, 0, 0)" class="px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded text-zinc-800">600 Private</button>
                         </div>
                     </div>
 
-                    {{-- Matriks 3x3 Hak Akses --}}
-                    <div class="border rounded-lg overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200 text-sm text-center">
-                            <thead class="bg-gray-50 text-xs uppercase text-gray-600">
+                    <div class="border border-zinc-200 rounded-md overflow-hidden">
+                        <table class="min-w-full divide-y divide-zinc-200 text-xs text-center">
+                            <thead class="bg-zinc-50 text-zinc-600 font-medium">
                                 <tr>
-                                    <th class="px-4 py-2.5 text-left">Kategori</th>
-                                    <th class="px-4 py-2.5">Read (r / 4)</th>
-                                    <th class="px-4 py-2.5">Write (w / 2)</th>
-                                    <th class="px-4 py-2.5">Execute (x / 1)</th>
+                                    <th class="px-4 py-2.5 text-left font-medium">Class</th>
+                                    <th class="px-4 py-2.5 font-medium">Read (4)</th>
+                                    <th class="px-4 py-2.5 font-medium">Write (2)</th>
+                                    <th class="px-4 py-2.5 font-medium">Execute (1)</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200">
+                            <tbody class="divide-y divide-zinc-100">
                                 <tr>
-                                    <td class="px-4 py-3 text-left font-medium text-gray-800">Owner (Pemilik)</td>
-                                    <td><input type="checkbox" name="owner_r" value="1" x-model="owner_r" class="rounded text-indigo-600"></td>
-                                    <td><input type="checkbox" name="owner_w" value="1" x-model="owner_w" class="rounded text-indigo-600"></td>
-                                    <td><input type="checkbox" name="owner_x" value="1" x-model="owner_x" class="rounded text-indigo-600"></td>
+                                    <td class="px-4 py-2.5 text-left font-medium text-zinc-900">Owner</td>
+                                    <td><input type="checkbox" name="owner_r" value="1" x-model="owner_r" class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"></td>
+                                    <td><input type="checkbox" name="owner_w" value="1" x-model="owner_w" class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"></td>
+                                    <td><input type="checkbox" name="owner_x" value="1" x-model="owner_x" class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"></td>
                                 </tr>
                                 <tr>
-                                    <td class="px-4 py-3 text-left font-medium text-gray-800">Group (Anggota Grup)</td>
-                                    <td><input type="checkbox" name="group_r" value="1" x-model="group_r" class="rounded text-indigo-600"></td>
-                                    <td><input type="checkbox" name="group_w" value="1" x-model="group_w" class="rounded text-indigo-600"></td>
-                                    <td><input type="checkbox" name="group_x" value="1" x-model="group_x" class="rounded text-indigo-600"></td>
+                                    <td class="px-4 py-2.5 text-left font-medium text-zinc-900">Group</td>
+                                    <td><input type="checkbox" name="group_r" value="1" x-model="group_r" class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"></td>
+                                    <td><input type="checkbox" name="group_w" value="1" x-model="group_w" class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"></td>
+                                    <td><input type="checkbox" name="group_x" value="1" x-model="group_x" class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"></td>
                                 </tr>
                                 <tr>
-                                    <td class="px-4 py-3 text-left font-medium text-gray-800">Others (Publik / Lainnya)</td>
-                                    <td><input type="checkbox" name="others_r" value="1" x-model="others_r" class="rounded text-indigo-600"></td>
-                                    <td><input type="checkbox" name="others_w" value="1" x-model="others_w" class="rounded text-indigo-600"></td>
-                                    <td><input type="checkbox" name="others_x" value="1" x-model="others_x" class="rounded text-indigo-600"></td>
+                                    <td class="px-4 py-2.5 text-left font-medium text-zinc-900">Others</td>
+                                    <td><input type="checkbox" name="others_r" value="1" x-model="others_r" class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"></td>
+                                    <td><input type="checkbox" name="others_w" value="1" x-model="others_w" class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"></td>
+                                    <td><input type="checkbox" name="others_x" value="1" x-model="others_x" class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
                     <div class="flex justify-end gap-2 pt-2">
-                        <button type="button" @click="showPermModal = false" class="px-4 py-2 text-sm text-gray-600">Batal</button>
-                        <x-primary-button>Simpan Perubahan</x-primary-button>
+                        <button type="button" @click="showPermModal = false" class="px-3.5 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900">Cancel</button>
+                        <button type="submit" class="px-4 py-1.5 bg-zinc-900 text-white rounded-md text-xs font-medium hover:bg-zinc-800">Apply changes</button>
                     </div>
                 </form>
             </div>

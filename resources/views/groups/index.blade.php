@@ -1,24 +1,25 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Linux User Groups') }}
-        </h2>
+        <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-lg text-zinc-900 tracking-tight">
+                User Groups
+            </h2>
+            <span class="text-xs font-mono text-zinc-500">/etc/group simulation</span>
+        </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-8 bg-zinc-50 min-h-screen">
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
-            {{-- Notifikasi Sukses --}}
             @if (session('status'))
-                <div class="p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg text-sm">
+                <div class="px-4 py-3 bg-white border-l-4 border-emerald-600 border-y border-r border-zinc-200 text-zinc-800 rounded-r-md text-sm">
                     {{ session('status') }}
                 </div>
             @endif
 
-            {{-- Notifikasi Error Validasi --}}
             @if ($errors->any())
-                <div class="p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg text-sm">
-                    <ul class="list-disc list-inside">
+                <div class="px-4 py-3 bg-white border-l-4 border-red-600 border-y border-r border-zinc-200 text-red-700 rounded-r-md text-sm">
+                    <ul class="list-disc list-inside space-y-0.5">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
@@ -26,36 +27,38 @@
                 </div>
             @endif
 
-            {{-- Form Buat Grup Baru --}}
-            <div class="p-6 bg-white shadow sm:rounded-lg">
-                <h3 class="text-lg font-medium text-gray-900 mb-1">Buat Grup Baru</h3>
-                <p class="text-sm text-gray-600 mb-4">
-                    Kelompokkan pengguna agar dapat berbagi hak akses file/folder secara bersamaan (mirip perintah <code class="bg-gray-100 px-1 rounded">groupadd</code>).
+            {{-- Create Group --}}
+            <div class="p-5 bg-white border border-zinc-200 rounded-lg">
+                <h3 class="text-sm font-semibold text-zinc-900 mb-1">Create new group</h3>
+                <p class="text-xs text-zinc-500 mb-4">
+                    Group users together to assign shared <code class="font-mono text-zinc-700">rwx</code> permissions on files and folders.
                 </p>
 
-                <form method="POST" action="{{ route('groups.store') }}" class="flex gap-3">
+                <form method="POST" action="{{ route('groups.store') }}" class="flex gap-2.5">
                     @csrf
-                    <x-text-input
+                    <input
                         name="name"
                         type="text"
-                        class="flex-1"
-                        placeholder="Nama grup (misal: Tim Proyek OS, Asisten Dosen)"
+                        class="flex-1 border-zinc-300 rounded-md text-sm focus:border-zinc-900 focus:ring-zinc-900"
+                        placeholder="Group name (e.g. Praktikum OS)"
                         required
                     />
-                    <x-primary-button>Buat Grup</x-primary-button>
+                    <button type="submit" class="px-4 py-2 bg-zinc-900 text-white rounded-md text-xs font-medium hover:bg-zinc-800 transition">
+                        Create group
+                    </button>
                 </form>
             </div>
 
-            {{-- Daftar Grup yang Diikuti --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {{-- Group List --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @forelse ($groups as $group)
-                    <div class="p-6 bg-white shadow sm:rounded-lg flex flex-col justify-between">
+                    <div class="p-5 bg-white border border-zinc-200 rounded-lg flex flex-col justify-between">
                         <div>
-                            <div class="flex items-start justify-between border-b pb-3 mb-4">
+                            <div class="flex items-start justify-between border-b border-zinc-100 pb-3 mb-3">
                                 <div>
-                                    <h4 class="text-lg font-semibold text-gray-900">{{ $group->name }}</h4>
-                                    <p class="text-xs text-gray-500">
-                                        Admin Grup: <span class="font-medium">{{ $group->creator->name }}</span>
+                                    <h4 class="text-base font-semibold text-zinc-900">{{ $group->name }}</h4>
+                                    <p class="text-xs text-zinc-500 mt-0.5">
+                                        Admin: <span class="text-zinc-700 font-medium">{{ $group->creator->name }}</span>
                                     </p>
                                 </div>
 
@@ -63,35 +66,33 @@
                                     <form method="POST" action="{{ route('groups.destroy', $group) }}" onsubmit="return confirm('Hapus grup ini?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-xs text-red-600 hover:underline">
-                                            Hapus Grup
+                                        <button type="submit" class="text-xs text-red-600 hover:text-red-800 font-medium">
+                                            Delete
                                         </button>
                                     </form>
                                 @endif
                             </div>
 
-                            {{-- Daftar Anggota --}}
-                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-                                Anggota ({{ $group->members->count() }})
+                            <p class="text-xs font-medium text-zinc-500 mb-2">
+                                Members ({{ $group->members->count() }})
                             </p>
-                            <ul class="space-y-2 mb-5">
+                            <ul class="space-y-1.5 mb-4">
                                 @foreach ($group->members as $member)
-                                    <li class="flex items-center justify-between text-sm bg-gray-50 px-3 py-1.5 rounded">
+                                    <li class="flex items-center justify-between text-xs bg-zinc-50 border border-zinc-200/70 px-3 py-2 rounded-md">
                                         <div>
-                                            <span class="font-medium text-gray-800">{{ $member->name }}</span>
-                                            <span class="text-xs text-gray-500">({{ $member->email }})</span>
+                                            <span class="font-medium text-zinc-900">{{ $member->name }}</span>
+                                            <span class="text-zinc-500 ml-1">{{ $member->email }}</span>
                                             @if ($member->id === $group->created_by)
-                                                <span class="ml-1 text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-semibold">Admin</span>
+                                                <span class="ml-1.5 text-[11px] text-zinc-500 font-mono">[admin]</span>
                                             @endif
                                         </div>
 
-                                        {{-- Tombol keluarkan anggota (hanya muncul untuk Admin grup & bukan dirinya sendiri) --}}
                                         @if ($group->created_by === auth()->id() && $member->id !== $group->created_by)
                                             <form method="POST" action="{{ route('groups.members.remove', [$group, $member]) }}">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-xs text-red-500 hover:text-red-700">
-                                                    Keluarkan
+                                                <button type="submit" class="text-xs text-red-600 hover:text-red-800">
+                                                    Remove
                                                 </button>
                                             </form>
                                         @endif
@@ -100,24 +101,25 @@
                             </ul>
                         </div>
 
-                        {{-- Form Tambah Anggota (Hanya untuk Admin Grup) --}}
                         @if ($group->created_by === auth()->id())
-                            <form method="POST" action="{{ route('groups.members.add', $group) }}" class="pt-3 border-t flex gap-2">
+                            <form method="POST" action="{{ route('groups.members.add', $group) }}" class="pt-3 border-t border-zinc-100 flex gap-2">
                                 @csrf
-                                <x-text-input
+                                <input
                                     name="email"
                                     type="email"
-                                    class="flex-1 text-sm"
-                                    placeholder="Email user untuk ditambahkan..."
+                                    class="flex-1 border-zinc-300 rounded-md text-xs focus:border-zinc-900 focus:ring-zinc-900"
+                                    placeholder="User email address..."
                                     required
                                 />
-                                <x-primary-button class="text-xs">Tambah</x-primary-button>
+                                <button type="submit" class="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 text-zinc-800 rounded-md text-xs font-medium transition">
+                                    Add
+                                </button>
                             </form>
                         @endif
                     </div>
                 @empty
-                    <div class="col-span-2 p-6 bg-white shadow sm:rounded-lg text-center text-gray-500 text-sm">
-                        Kamu belum tergabung dalam grup mana pun. Buat grup pertamamu di atas.
+                    <div class="col-span-2 p-8 bg-white border border-zinc-200 rounded-lg text-center text-zinc-400 text-xs">
+                        You are not a member of any group yet.
                     </div>
                 @endforelse
             </div>

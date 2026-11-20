@@ -6,7 +6,7 @@ use App\Http\Controllers\DriveController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('drive.index');
 });
 
 Route::get('/dashboard', function () {

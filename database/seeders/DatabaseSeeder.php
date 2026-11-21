@@ -16,23 +16,23 @@ class DatabaseSeeder extends Seeder
         // Bersihkan file dummy lama di storage agar tidak menumpuk
         Storage::deleteDirectory('nanodrive');
 
-        // 1. Buat 3 Akun Demo (Owner, Anggota Group, dan Others)
+        // 1. Buat 3 Akun Demo dengan Password Kuat
         $faiz = User::create([
             'name' => 'Faiz',
             'email' => 'faiz@gmail.com',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('faiz010109'),
         ]);
 
         $surya = User::create([
             'name' => 'Pak Surya',
             'email' => 'surya@kampus.ac.id',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('surya010109'),
         ]);
 
         $budi = User::create([
             'name' => 'Budi',
             'email' => 'budi@kampus.ac.id',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('budi010109'),
         ]);
 
         // 2. Buat Grup Praktikum OS (Beranggotakan Faiz & Pak Surya, tanpa Budi)

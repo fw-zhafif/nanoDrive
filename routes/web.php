@@ -10,7 +10,19 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    /** @var \App\Models\User $user */
+    $user = \Illuminate\Support\Facades\Auth::user();
+
+    return view('dashboard', [
+        'user' => $user,
+        'groups' => $user->groups()->withCount('members')->get(),
+        'ownedItemsCount' => $user->items()->count(),
+        'storageUsed' => $user->items()->where('type', 'file')->sum('size'),
+        'recentItems' => \App\Models\Item::with(['owner', 'group'])
+            ->latest()
+            ->take(5)
+            ->get(),
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {

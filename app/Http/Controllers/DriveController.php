@@ -94,7 +94,7 @@ class DriveController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $uploadedFile = $request->file('file');
-        $path = $uploadedFile->store('nanodrive', 'public');
+        $path = $uploadedFile->store('nanodrive');
 
         Item::create([
             'name' => $uploadedFile->getClientOriginalName(),
@@ -118,10 +118,9 @@ class DriveController extends Controller
         Gate::authorize('download', $item);
 
         abort_if(!$item->file_path, 404);
-        $fullPath = Storage::disk('public')->path($item->file_path);
-        abort_unless(file_exists($fullPath), 404, 'File fisik tidak ditemukan di server.');
+        abort_unless(Storage::exists($item->file_path), 404, 'File fisik tidak ditemukan di storage.');
 
-        return response()->download($fullPath, $item->name);
+        return Storage::download($item->file_path, $item->name);
     }
 
     public function rename(Request $request, Item $item)
@@ -201,7 +200,7 @@ class DriveController extends Controller
                 $this->deleteItemRecursively($child);
             }
         } elseif ($item->file_path) {
-            Storage::disk('public')->delete($item->file_path);
+            Storage::delete($item->file_path);
         }
 
         $item->delete();

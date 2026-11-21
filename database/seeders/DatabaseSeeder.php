@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Bersihkan file dummy lama di storage agar tidak menumpuk
-        Storage::disk('public')->deleteDirectory('nanodrive');
+        Storage::deleteDirectory('nanodrive');
 
         // 1. Buat 3 Akun Demo (Owner, Anggota Group, dan Others)
         $faiz = User::create([
@@ -56,7 +56,7 @@ class DatabaseSeeder extends Seeder
         // 4. Buat File Fisik Dummy di dalam folder tersebut (Mode 660: Kolaborasi Grup)
         $sampleContent = "Laporan Praktikum Sistem Operasi - Simulasi Linux File Permissions (rwx) pada NanoDrive.\n";
         $samplePath = 'nanodrive/catatan_sistem_operasi.txt';
-        Storage::disk('public')->put($samplePath, $sampleContent);
+        Storage::put($samplePath, $sampleContent);
 
         Item::create([
             'name' => 'catatan_sistem_operasi.txt',

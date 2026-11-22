@@ -43,5 +43,13 @@
                 {{ __('Log in') }}
             </x-primary-button>
         </div>
+        <div class="mt-6 pt-4 border-t border-zinc-100 text-center">
+            <p class="text-xs text-zinc-500">
+                Belum punya akun NanoDrive?
+                <a href="{{ route('register') }}" class="font-semibold text-zinc-900 hover:underline">
+                    Daftar sekarang
+                </a>
+            </p>
+        </div>
     </form>
 </x-guest-layout>

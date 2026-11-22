@@ -1,4 +1,4 @@
-    <?php
+<?php
 
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ProfileController;
